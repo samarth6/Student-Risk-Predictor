@@ -1,24 +1,3 @@
-"""
-train_model.py
-----------------
-Trains and compares supervised classifiers to predict binary dropout risk
-using only information known at the time of ENROLLMENT.
-
-Target:
-    1 -> Dropout
-    0 -> Not at risk (students who were still Enrolled or Graduated)
-
-Dataset: UCI "Predict Students' Dropout and Academic Success" (Realinho et
-al., 2021) - 4,424 students, a real higher-education institution in Portugal.
-
-Improvements:
-    - Optuna hyperparameter tuning on the winning model family (50 trials).
-    - Threshold sweep (0.30 → 0.65) to maximise macro-F1 recall without
-      destroying precision; chosen threshold is saved into model.pkl.
-
-Run:
-    python train_model.py
-"""
 
 import json
 import warnings
@@ -59,15 +38,11 @@ NEGATIVE_LABEL = "Not at risk"
 LABELS = {0: NEGATIVE_LABEL, 1: POSITIVE_LABEL}
 MODEL_DIR = Path("model")
 
-# ---------------------------------------------------------------------------
-# 1. Load data
-# ---------------------------------------------------------------------------
+
 df = pd.read_csv("data/dropout_data.csv", sep=";", encoding="utf-8-sig")
 df.columns = [c.strip() for c in df.columns]
 
-# ---------------------------------------------------------------------------
-# 2. Band the qualification columns (official UCI code table -> 5 levels)
-# ---------------------------------------------------------------------------
+
 QUALIFICATION_BAND = {
     1: "Secondary", 2: "Higher education (bachelor/degree)", 3: "Higher education (bachelor/degree)",
     4: "Higher education (master/doctorate)", 5: "Higher education (master/doctorate)",
@@ -84,9 +59,7 @@ QUALIFICATION_BAND = {
 for col in ["Previous qualification", "Mother's qualification", "Father's qualification"]:
     df[col + " band"] = df[col].map(QUALIFICATION_BAND).fillna("Other/unknown")
 
-# ---------------------------------------------------------------------------
-# 3. Feature selection - ENROLLMENT-TIME features only
-# ---------------------------------------------------------------------------
+
 NUMERIC_FEATURES = [
     "Application order", "Previous qualification (grade)", "Admission grade",
     "Age at enrollment", "Unemployment rate", "Inflation rate", "GDP",
@@ -104,16 +77,12 @@ FEATURES = NUMERIC_FEATURES + BINARY_FEATURES + CATEGORICAL_FEATURES
 X = df[FEATURES].copy()
 y = (df["Target"] == POSITIVE_LABEL).astype(int)
 
-# ---------------------------------------------------------------------------
-# 4. Train / test split (stratified)
-# ---------------------------------------------------------------------------
+
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
 )
 
-# ---------------------------------------------------------------------------
-# 5. Preprocessing pipeline
-# ---------------------------------------------------------------------------
+
 preprocessor = ColumnTransformer(
     transformers=[
         ("num", StandardScaler(), NUMERIC_FEATURES),
@@ -144,9 +113,7 @@ baseline_models = {
     ),
 }
 
-# ---------------------------------------------------------------------------
-# 6. Cross-validation model comparison (baseline hyperparams)
-# ---------------------------------------------------------------------------
+
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
 scoring = {
     "accuracy": "accuracy",
@@ -182,9 +149,7 @@ for name, estimator in baseline_models.items():
 best_name = max(cv_results, key=lambda k: cv_results[k]["f1_macro"]["mean"])
 print(f"\n  Best baseline model: {best_name} (macro-F1 = {cv_results[best_name]['f1_macro']['mean']})")
 
-# ---------------------------------------------------------------------------
-# 7. Optuna hyperparameter tuning on the winning model family
-# ---------------------------------------------------------------------------
+
 print("\n" + "=" * 60)
 print(f"STEP 2 - Optuna hyperparameter tuning ({best_name}, 50 trials)")
 print("=" * 60)
@@ -257,7 +222,7 @@ best_trial_f1 = round(study.best_value, 4)
 print(f"  Best Optuna macro-F1 (CV): {best_trial_f1}")
 print(f"  Best params: {best_params}")
 
-# Build tuned base model
+
 if best_name == "random_forest":
     tuned_base = RandomForestClassifier(
         **best_params, class_weight="balanced", random_state=RANDOM_STATE, n_jobs=-1
@@ -272,9 +237,7 @@ else:
         **best_params, max_iter=2000, class_weight="balanced", random_state=RANDOM_STATE,
     )
 
-# ---------------------------------------------------------------------------
-# 8. Fit tuned base model + probability calibration
-# ---------------------------------------------------------------------------
+
 print("\n" + "=" * 60)
 print("STEP 3 - Fitting calibrated model on train set")
 print("=" * 60)
@@ -289,9 +252,7 @@ calibrated_model = CalibratedClassifierCV(
 )
 calibrated_model.fit(X_train_t, y_train)
 
-# ---------------------------------------------------------------------------
-# 9. Threshold sweep - maximise macro-F1 on out-of-fold training data
-# ---------------------------------------------------------------------------
+
 print("\n" + "=" * 60)
 print("STEP 4 - Threshold sweep (0.30 -> 0.65)")
 print("=" * 60)
@@ -323,7 +284,7 @@ for t in thresholds:
 
 print(f"\n  Chosen threshold: {best_threshold}  (macro-F1 = {best_f1:.4f})")
 
-# Final predictions using chosen threshold
+
 proba_test = calibrated_model.predict_proba(X_test_t)[:, 1]
 preds = (proba_test >= best_threshold).astype(int)
 
@@ -382,9 +343,7 @@ else:
 
 print("  Done.")
 
-# ---------------------------------------------------------------------------
-# 11. Persist everything the Flask app needs
-# ---------------------------------------------------------------------------
+
 print("\n" + "=" * 60)
 print("STEP 6 - Saving model artifacts")
 print("=" * 60)
