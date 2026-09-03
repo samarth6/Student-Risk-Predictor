@@ -1,15 +1,4 @@
-"""
-app.py
-------
-Flask backend for the Student Dropout Risk Predictor (real UCI dropout
-dataset, 4,424 students, enrollment-time features only). The deployed task is
-binary: Dropout vs Not at risk.
 
-Routes:
-    GET  /            -> input form
-    POST /predict      -> runs the model, returns results page with SHAP explanation
-    GET  /model-info    -> model comparison table
-"""
 
 import json
 
@@ -23,9 +12,7 @@ from config import Config
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# ---------------------------------------------------------------------------
-# Load model artifacts once at startup
-# ---------------------------------------------------------------------------
+
 bundle = joblib.load(app.config["MODEL_PATH"])
 MODEL = bundle["model"]
 MODEL_NAME = bundle["model_name"]
@@ -38,7 +25,6 @@ LABELS = {int(k): v for k, v in bundle["labels"].items()}
 POSITIVE_CLASS = int(bundle["positive_class"])
 POSITIVE_LABEL = bundle["positive_label"]
 NEGATIVE_LABEL = bundle["negative_label"]
-# Tuned classification threshold (from threshold sweep in train_model.py)
 DECISION_THRESHOLD = float(bundle.get("decision_threshold", 0.50))
 
 shap_bundle = joblib.load(app.config["SHAP_PATH"])
@@ -49,7 +35,7 @@ with open(app.config["METRICS_PATH"]) as f:
 
 RISK_COLORS = {NEGATIVE_LABEL: "#2f9e44", POSITIVE_LABEL: "#d64545"}
 
-# Human-readable labels for the SHAP chart
+
 FRIENDLY_NAMES = {
     "num__Application order": "Application order (choice rank)",
     "num__Previous qualification (grade)": "Previous qualification grade",
@@ -142,7 +128,7 @@ def predict():
     class_to_index = {int(cls): idx for idx, cls in enumerate(MODEL.classes_)}
     dropout_probability = round(float(proba[class_to_index[POSITIVE_CLASS]]) * 100, 1)
     safe_probability = round(100 - dropout_probability, 1)
-    # Use the tuned threshold instead of the default 0.5
+    
     pred_encoded = POSITIVE_CLASS if (dropout_probability / 100) >= DECISION_THRESHOLD else (1 - POSITIVE_CLASS)
     pred_label = LABELS[pred_encoded]
     proba_map = {
