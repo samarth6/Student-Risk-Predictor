@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="EarlyWarn — AI-powered student dropout risk predictor using enrollment-time data and explainable machine learning.">
+  <title>{% block title %}Student Risk Panel{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+  <!-- Ambient floating particles -->
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-text">EARLY<span class="brand-accent">WARN</span></span>
+      </a>
+      <nav class="nav">
+        <a href="/" class="{{ 'active' if request.path == '/' else '' }}">New assessment</a>
+        <a href="/model-info" class="{{ 'active' if request.path == '/model-info' else '' }}">Model panel</a>
+        <a href="/about" class="{{ 'active' if request.path == '/about' else '' }}">About</a>
+      </nav>
+    </div>
+  </header>
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-badges">
+        <span class="footer-badge"><i class="fa-brands fa-python"></i> Python 3.10</span>
+        <span class="footer-badge"><i class="fa-solid fa-flask-vial"></i> Flask</span>
+        <span class="footer-badge"><i class="fa-solid fa-brain"></i> scikit-learn</span>
+        <span class="footer-badge"><i class="fa-solid fa-bolt"></i> XGBoost</span>
+        <span class="footer-badge"><i class="fa-solid fa-chart-simple"></i> SHAP</span>
+        <span class="footer-badge"><i class="fa-solid fa-sliders"></i> Optuna</span>
+      </div>
+      <span>EarlyWarn &middot; Student Academic Risk Predictor</span>
+    </div>
+  </footer>
+</body>
+
+</html>

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Model Panel — EarlyWarn Student Risk Predictor{% endblock %}
+{% block content %}
+
+<div class="hero">
+  <p class="eyebrow">Model panel</p>
+  <h1>Binary dropout-risk model</h1>
+  <p>The app predicts whether a student is at dropout risk, using only enrollment-time
+    features. Students whose recorded outcome was Enrolled or Graduate are treated as
+    Not at risk, which matches the intervention question more directly.</p>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2><span class="section-icon">📊</span> Cross-validation comparison</h2>
+    <span class="panel-index">5-fold stratified CV</span>
+  </div>
+  <table class="metrics">
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Accuracy</th>
+        <th>Recall macro</th>
+        <th>F1 macro</th>
+        <th>ROC AUC</th>
+        <th>Avg precision</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for name, m in metrics.cv_results.items() %}
+      <tr class="{{ 'winner' if name == best_model else '' }}">
+        <td>
+          {{ name.replace('_', ' ').title() }}
+          {% if name == best_model %}<span class="tag-best">selected</span>{% endif %}
+        </td>
+        <td>{{ (m.accuracy.mean * 100) | round(1) }}% +/- {{ (m.accuracy.std * 100) | round(1) }}</td>
+        <td>{{ (m.recall_macro.mean * 100) | round(1) }}% +/- {{ (m.recall_macro.std * 100) | round(1) }}</td>
+        <td>{{ (m.f1_macro.mean * 100) | round(1) }}% +/- {{ (m.f1_macro.std * 100) | round(1) }}</td>
+        <td>{{ (m.roc_auc.mean * 100) | round(1) }}% +/- {{ (m.roc_auc.std * 100) | round(1) }}</td>
+        <td>{{ (m.average_precision.mean * 100) | round(1) }}% +/- {{ (m.average_precision.std * 100) | round(1) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2><span class="section-icon">🚀</span> Deployed calibrated model</h2>
+    <span class="panel-index">holdout test set, n = 885</span>
+  </div>
+  <table class="metrics">
+    <tbody>
+      <tr><th>Model</th><td>{{ metrics.deployed_model.replace('_', ' ').title() }}</td></tr>
+      <tr><th>Decision threshold</th><td>{{ metrics.decision_threshold }} (&ge; this &rarr; Dropout flag)</td></tr>
+      <tr><th>Accuracy</th><td>{{ (metrics.holdout_metrics.accuracy * 100) | round(1) }}%</td></tr>
+      <tr><th>Macro-F1</th><td>{{ (metrics.holdout_metrics.f1_macro * 100) | round(1) }}%</td></tr>
+      <tr><th>Dropout recall</th><td>{{ (metrics.holdout_metrics.dropout_recall * 100) | round(1) }}%</td></tr>
+      <tr><th>Dropout precision</th><td>{{ (metrics.holdout_metrics.dropout_precision * 100) | round(1) }}%</td></tr>
+      <tr><th>ROC AUC</th><td>{{ (metrics.holdout_metrics.roc_auc * 100) | round(1) }}%</td></tr>
+      <tr><th>Brier score</th><td>{{ metrics.holdout_metrics.brier_score }}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2><span class="section-icon">📋</span> Class-level report</h2>
+    <span class="panel-index">holdout test set</span>
+  </div>
+  <table class="metrics">
+    <thead>
+      <tr>
+        <th>Class</th>
+        <th>Precision</th>
+        <th>Recall</th>
+        <th>F1</th>
+        <th>Support</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for label in [metrics.negative_label, metrics.positive_label, 'macro avg', 'weighted avg'] %}
+      {% set row = metrics.classification_report[label] %}
+      <tr>
+        <td>{{ label }}</td>
+        <td>{{ (row.precision * 100) | round(1) }}%</td>
+        <td>{{ (row.recall * 100) | round(1) }}%</td>
+        <td>{{ (row['f1-score'] * 100) | round(1) }}%</td>
+        <td>{{ row.support }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2><span class="section-icon">🔢</span> Confusion matrix</h2>
+    <span class="panel-index">rows = actual, columns = predicted</span>
+  </div>
+  <table class="metrics">
+    <thead>
+      <tr>
+        <th>Actual \ Predicted</th>
+        {% for label in metrics.confusion_matrix.labels %}<th>{{ label }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for label in metrics.confusion_matrix.labels %}
+      {% set row_idx = loop.index0 %}
+      <tr>
+        <td>{{ label }}</td>
+        {% for value in metrics.confusion_matrix.matrix[row_idx] %}
+          {% set col_idx = loop.index0 %}
+          {% if row_idx == 0 and col_idx == 0 %}
+            <td class="cm-tn">{{ value }}</td>
+          {% elif row_idx == 1 and col_idx == 1 %}
+            <td class="cm-tp">{{ value }}</td>
+          {% elif row_idx == 0 and col_idx == 1 %}
+            <td class="cm-fp">{{ value }}</td>
+          {% else %}
+            <td class="cm-fn">{{ value }}</td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2><span class="section-icon">⚖️</span> Read the numbers honestly</h2>
+    <span class="panel-index">scope</span>
+  </div>
+  <p class="note">
+    The baseline is {{ (metrics.baseline.accuracy * 100) | round(1) }}% accuracy by always predicting
+    {{ metrics.negative_label }}. The calibrated model gives more useful dropout-risk probabilities,
+    but it is still a screening aid. A production version should combine this enrollment-time score
+    with early-semester attendance, assessments, and advisor notes once those become available.
+  </p>
+</div>
+
+<a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Run an assessment</a>
+
+{% endblock %}

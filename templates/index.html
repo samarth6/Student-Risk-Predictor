@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}New Assessment — EarlyWarn Student Risk Predictor{% endblock %}
+{% block content %}
+
+<div class="hero">
+  <p class="eyebrow">Early-warning intake</p>
+  <h1>Assess a student's dropout risk</h1>
+  <p>Enter the details below. Predictions use only information known at the moment
+    of enrollment — no first or second semester grades required — so this can flag
+    risk before a student has attended a single class.</p>
+</div>
+
+<form action="/predict" method="post">
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2><span class="section-icon">📋</span> 01 &nbsp;Application</h2>
+      <span class="panel-index">how the student applied</span>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="Marital status">Marital status</label>
+        <select id="Marital status" name="Marital status">
+          <option value="1" selected>Single</option>
+          <option value="2">Married</option>
+          <option value="3">Widower</option>
+          <option value="4">Divorced</option>
+          <option value="5">Facto union</option>
+          <option value="6">Legally separated</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="Application mode">Application mode</label>
+        <select id="Application mode" name="Application mode">
+          <option value="1" selected>1st phase - general contingent</option>
+          <option value="2">Ordinance No. 612/93</option>
+          <option value="5">1st phase - special contingent (Azores)</option>
+          <option value="7">Holder of other higher course</option>
+          <option value="10">Ordinance No. 854-B/99</option>
+          <option value="15">International student (bachelor)</option>
+          <option value="16">1st phase - special contingent (Madeira)</option>
+          <option value="17">2nd phase - general contingent</option>
+          <option value="18">3rd phase - general contingent</option>
+          <option value="26">Ordinance 533-A/99, item b2 (different plan)</option>
+          <option value="27">Ordinance 533-A/99, item b3 (other institution)</option>
+          <option value="39">Over 23 years old</option>
+          <option value="42">Transfer</option>
+          <option value="43">Change of course</option>
+          <option value="44">Technological specialization diploma holder</option>
+          <option value="51">Change of institution/course</option>
+          <option value="53">Short cycle diploma holder</option>
+          <option value="57">Change of institution/course (international)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="Application order">Application order (0 = first choice, 9 = last)</label>
+        <input type="number" id="Application order" name="Application order" min="0" max="9" value="1" required>
+      </div>
+      <div class="field">
+        <label for="Course">Course</label>
+        <select id="Course" name="Course">
+          <option value="33">Biofuel Production Technologies</option>
+          <option value="171">Animation and Multimedia Design</option>
+          <option value="8014">Social Service (evening)</option>
+          <option value="9003">Agronomy</option>
+          <option value="9070">Communication Design</option>
+          <option value="9085">Veterinary Nursing</option>
+          <option value="9119" selected>Informatics Engineering</option>
+          <option value="9130">Equinculture</option>
+          <option value="9147">Management</option>
+          <option value="9238">Social Service</option>
+          <option value="9254">Tourism</option>
+          <option value="9500">Nursing</option>
+          <option value="9556">Oral Hygiene</option>
+          <option value="9670">Advertising and Marketing Management</option>
+          <option value="9773">Journalism and Communication</option>
+          <option value="9853">Basic Education</option>
+          <option value="9991">Management (evening)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="Daytime/evening attendance">Attendance</label>
+        <select id="Daytime/evening attendance" name="Daytime/evening attendance">
+          <option value="1" selected>Daytime</option>
+          <option value="0">Evening</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2><span class="section-icon">🎓</span> 02 &nbsp;Academic background</h2>
+      <span class="panel-index">prior qualifications</span>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="Previous qualification">Previous qualification</label>
+        <select id="Previous qualification" name="Previous qualification">
+          <option value="1" selected>Secondary education</option>
+          <option value="2">Higher ed - bachelor's</option>
+          <option value="3">Higher ed - degree</option>
+          <option value="4">Higher ed - master's</option>
+          <option value="5">Higher ed - doctorate</option>
+          <option value="6">Frequency of higher education</option>
+          <option value="9">12th year - not completed</option>
+          <option value="10">11th year - not completed</option>
+          <option value="12">Other - 11th year</option>
+          <option value="14">10th year of schooling</option>
+          <option value="15">10th year - not completed</option>
+          <option value="19">Basic education 3rd cycle</option>
+          <option value="38">Basic education 2nd cycle</option>
+          <option value="39">Technological specialization course</option>
+          <option value="40">Higher ed - degree (1st cycle)</option>
+          <option value="42">Professional higher technical course</option>
+          <option value="43">Higher ed - master (2nd cycle)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="Previous qualification (grade)">Previous qualification grade (0&ndash;200)</label>
+        <input type="number" id="Previous qualification (grade)" name="Previous qualification (grade)" min="0" max="200" value="130" required>
+      </div>
+      <div class="field">
+        <label for="Admission grade">Admission grade (0&ndash;200)</label>
+        <input type="number" id="Admission grade" name="Admission grade" min="0" max="200" value="125" required>
+      </div>
+      <div class="field">
+        <label for="Age at enrollment">Age at enrollment</label>
+        <input type="number" id="Age at enrollment" name="Age at enrollment" min="17" max="70" value="19" required>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2><span class="section-icon">👨‍👩‍👧</span> 03 &nbsp;Family background</h2>
+      <span class="panel-index">socioeconomic</span>
+    </div>
+    <div class="form-grid">
+      {% for who in ["Mother's qualification", "Father's qualification"] %}
+      <div class="field">
+        <label for="{{ who }}">{{ who }}</label>
+        <select id="{{ who }}" name="{{ who }}">
+          <option value="1" selected>Secondary education (12th year)</option>
+          <option value="2">Higher ed - bachelor's</option>
+          <option value="3">Higher ed - degree</option>
+          <option value="4">Higher ed - master's</option>
+          <option value="5">Higher ed - doctorate</option>
+          <option value="19">Basic education 3rd cycle</option>
+          <option value="37">Basic education 1st cycle</option>
+          <option value="38">Basic education 2nd cycle</option>
+          <option value="35">Can't read or write</option>
+          <option value="34">Unknown</option>
+        </select>
+      </div>
+      {% endfor %}
+      <div class="field">
+        <label for="Displaced">Displaced from home</label>
+        <select id="Displaced" name="Displaced">
+          <option value="1">Yes</option>
+          <option value="0" selected>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="International">International student</label>
+        <select id="International" name="International">
+          <option value="1">Yes</option>
+          <option value="0" selected>No</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2><span class="section-icon">💰</span> 04 &nbsp;Financial and support status</h2>
+      <span class="panel-index">this is where risk often hides</span>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="Debtor">Debtor (owes fees to the institution)</label>
+        <select id="Debtor" name="Debtor">
+          <option value="1">Yes</option>
+          <option value="0" selected>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="Tuition fees up to date">Tuition fees up to date</label>
+        <select id="Tuition fees up to date" name="Tuition fees up to date">
+          <option value="1" selected>Yes</option>
+          <option value="0">No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="Scholarship holder">Scholarship holder</label>
+        <select id="Scholarship holder" name="Scholarship holder">
+          <option value="1">Yes</option>
+          <option value="0" selected>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="Gender">Gender</label>
+        <select id="Gender" name="Gender">
+          <option value="1">Male</option>
+          <option value="0" selected>Female</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="Educational special needs">Educational special needs</label>
+        <select id="Educational special needs" name="Educational special needs">
+          <option value="1">Yes</option>
+          <option value="0" selected>No</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2><span class="section-icon">📈</span> 05 &nbsp;Macroeconomic context</h2>
+      <span class="panel-index">year of enrollment</span>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="Unemployment rate">Unemployment rate (%)</label>
+        <input type="number" step="0.1" id="Unemployment rate" name="Unemployment rate" min="0" max="20" value="11.6" required>
+        <span class="hint">Portugal historical range: ~7.6&ndash;16.2%</span>
+      </div>
+      <div class="field">
+        <label for="Inflation rate">Inflation rate (%)</label>
+        <input type="number" step="0.1" id="Inflation rate" name="Inflation rate" min="-2" max="5" value="1.2" required>
+      </div>
+      <div class="field">
+        <label for="GDP">GDP growth indicator</label>
+        <input type="number" step="0.1" id="GDP" name="GDP" min="-5" max="4" value="0.0" required>
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-row">
+    <button type="submit" class="btn"><i class="fa-solid fa-shield-halved"></i> &nbsp;Run risk assessment</button>
+  </div>
+</form>
+
+{% endblock %}

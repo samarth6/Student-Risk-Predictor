@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Assessment Result — EarlyWarn Student Risk Predictor{% endblock %}
+{% block content %}
+
+<div class="hero">
+  <p class="eyebrow">Assessment result</p>
+  <h1>Dropout risk: <span style="color:{{ risk_color }}">{{ risk }}</span></h1>
+  <p>Model used: <span style="font-family: var(--font-mono); color: var(--text);">{{ model_name }}</span>.
+    Calibrated dropout probability:
+    <span style="font-family: var(--font-mono); color: var(--text);">{{ dropout_probability }}%</span>.
+    This is a statistical estimate from historical patterns, not a diagnosis; treat it as a prompt
+    to check in with the student, not a verdict.</p>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2><span class="section-icon">🎯</span> Risk classification</h2>
+    <span class="panel-index">binary calibrated output</span>
+  </div>
+
+  <div class="gauge binary-gauge">
+    <div class="gauge-segment high {{ 'active' if risk == positive_label else '' }}">Dropout risk</div>
+    <div class="gauge-segment low {{ 'active' if risk == negative_label else '' }}">Not at risk</div>
+  </div>
+
+  <div class="proba-list">
+    {% for cls, color in [(positive_label, '#d9524a'), (negative_label, '#34a35e')] %}
+    <div class="proba-row">
+      <span class="proba-label">{{ cls }}</span>
+      <div class="proba-track">
+        <div class="proba-fill" style="width:{{ proba_map[cls] }}%; background:{{ color }};"></div>
+      </div>
+      <span class="proba-pct">{{ proba_map[cls] }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2><span class="section-icon">🔍</span> Why the model decided this</h2>
+    <span class="panel-index">SHAP contribution, dropout-risk score</span>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="shapChart" height="260"></canvas>
+  </div>
+  <div class="chart-legend">
+    <span><span class="legend-dot" style="background:#d64545"></span>pushes toward dropout risk</span>
+    <span><span class="legend-dot" style="background:#2f9e44"></span>pushes away from dropout risk</span>
+  </div>
+
+  <div class="insight-callout">
+    <span class="insight-icon">💡</span>
+    <p>These are the factors that mattered most for <strong style="color:var(--text)">this specific
+      student's</strong> dropout-risk score, not a general ranking of what matters for everyone.
+      Two students can land in the same risk band for entirely different reasons. Use this as a
+      starting point for a counselor conversation.</p>
+  </div>
+</div>
+
+<a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Run another assessment</a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  const ctx = document.getElementById('shapChart').getContext('2d');
+  const labels = {{ chart_labels | safe }};
+  const values = {{ chart_values | safe }};
+  const colors = {{ chart_colors | safe }};
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 6,
+        barThickness: 24,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      animation: { duration: 1200, easing: 'easeOutQuart' },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          grid: { color: 'rgba(40, 64, 95, 0.4)' },
+          ticks: { color: '#93a3bd', font: { family: 'JetBrains Mono', size: 11 } },
+          title: { display: true, text: 'SHAP value (impact on dropout-risk score)', color: '#93a3bd' }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#e9edf3', font: { family: 'Inter', size: 12 } }
+        }
+      }
+    }
+  });
+</script>
+
+{% endblock %}
