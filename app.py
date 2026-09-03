@@ -16,7 +16,7 @@ import json
 import joblib
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, request
+from flask import Flask, abort, render_template, request
 
 from config import Config
 
@@ -102,35 +102,38 @@ def about():
 def predict():
     form = request.form
 
-    row = {
-        "Application order": int(form["Application order"]),
-        "Previous qualification (grade)": float(form["Previous qualification (grade)"]),
-        "Admission grade": float(form["Admission grade"]),
-        "Age at enrollment": int(form["Age at enrollment"]),
-        "Unemployment rate": float(form["Unemployment rate"]),
-        "Inflation rate": float(form["Inflation rate"]),
-        "GDP": float(form["GDP"]),
-        "Daytime/evening attendance": int(form["Daytime/evening attendance"]),
-        "Displaced": int(form["Displaced"]),
-        "Educational special needs": int(form["Educational special needs"]),
-        "Debtor": int(form["Debtor"]),
-        "Tuition fees up to date": int(form["Tuition fees up to date"]),
-        "Gender": int(form["Gender"]),
-        "Scholarship holder": int(form["Scholarship holder"]),
-        "International": int(form["International"]),
-        "Marital status": form["Marital status"],
-        "Application mode": form["Application mode"],
-        "Course": form["Course"],
-        "Previous qualification band": QUALIFICATION_BAND.get(
-            int(form["Previous qualification"]), "Other/unknown"
-        ),
-        "Mother's qualification band": QUALIFICATION_BAND.get(
-            int(form["Mother's qualification"]), "Other/unknown"
-        ),
-        "Father's qualification band": QUALIFICATION_BAND.get(
-            int(form["Father's qualification"]), "Other/unknown"
-        ),
-    }
+    try:
+        row = {
+            "Application order": int(form["Application order"]),
+            "Previous qualification (grade)": float(form["Previous qualification (grade)"]),
+            "Admission grade": float(form["Admission grade"]),
+            "Age at enrollment": int(form["Age at enrollment"]),
+            "Unemployment rate": float(form["Unemployment rate"]),
+            "Inflation rate": float(form["Inflation rate"]),
+            "GDP": float(form["GDP"]),
+            "Daytime/evening attendance": int(form["Daytime/evening attendance"]),
+            "Displaced": int(form["Displaced"]),
+            "Educational special needs": int(form["Educational special needs"]),
+            "Debtor": int(form["Debtor"]),
+            "Tuition fees up to date": int(form["Tuition fees up to date"]),
+            "Gender": int(form["Gender"]),
+            "Scholarship holder": int(form["Scholarship holder"]),
+            "International": int(form["International"]),
+            "Marital status": form["Marital status"],
+            "Application mode": form["Application mode"],
+            "Course": form["Course"],
+            "Previous qualification band": QUALIFICATION_BAND.get(
+                int(form["Previous qualification"]), "Other/unknown"
+            ),
+            "Mother's qualification band": QUALIFICATION_BAND.get(
+                int(form["Mother's qualification"]), "Other/unknown"
+            ),
+            "Father's qualification band": QUALIFICATION_BAND.get(
+                int(form["Father's qualification"]), "Other/unknown"
+            ),
+        }
+    except (KeyError, ValueError) as exc:
+        abort(400, description=f"Invalid or missing form field: {exc}")
 
     X = pd.DataFrame([row])[NUMERIC_FEATURES + BINARY_FEATURES + CATEGORICAL_FEATURES]
     X_t = PREPROCESSOR.transform(X)
